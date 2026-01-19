@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>নওশীন স্টোর - ডিজিটাল খাতা</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; background: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .page { display: none; }
+        .page.active { display: block; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .hq-spinner { width: 50px; height: 50px; border: 5px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="pb-28">
+
+    <div id="loader" class="fixed inset-0 bg-white/90 z-[9999] flex flex-col items-center justify-center hidden">
+        <div class="hq-spinner"></div>
+        <p class="mt-4 font-bold text-blue-600 animate-pulse">নওশিন স্টোর লোড হচ্ছে...</p>
+    </div>
+
+    <header class="bg-white sticky top-0 z-50 p-4 shadow-sm flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button id="back-btn" onclick="goBack()" class="hidden w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full"><i class="fas fa-arrow-left"></i></button>
+            <h1 class="text-xl font-bold text-blue-700">নওশীন স্টোর এন্ড আব্দুল মজিদ চাউল ঘর</h1>
+        </div>
+        <button onclick="manualRefresh()" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shadow-inner active:rotate-180 transition-all">
+            <i class="fas fa-sync-alt" id="refresh-icon"></i>
+        </button>
+    </header>
+
+    <main class="p-4 space-y-5">
+        
+        <section id="page-dashboard" class="page active space-y-4">
+            <div class="bg-gradient-to-br from-blue-700 to-indigo-800 p-6 rounded-[2rem] text-white shadow-xl">
+                <p class="opacity-80 text-sm">মোট বকেয়া</p>
+                <h2 class="text-4xl font-black mt-1">৳ <span id="dash-total-baki">0</span></h2>
+                <div class="grid grid-cols-2 gap-3 mt-6">
+                    <div class="bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
+                        <p class="text-[10px] uppercase font-bold opacity-70">আজকের বাকি</p>
+                        <p class="text-lg font-bold">৳ <span id="dash-today-baki">0</span></p>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-2xl backdrop-blur-sm">
+                        <p class="text-[10px] uppercase font-bold opacity-70">আজকের জমা</p>
+                        <p class="text-lg font-bold">৳ <span id="dash-today-joma">0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center"><i class="fas fa-user-clock"></i></div>
+                    <div><p class="text-[10px] font-bold text-slate-400">বাকি আছে</p><p class="font-bold text-slate-700"><span id="dash-has-baki">0</span> জন</p></div>
+                </div>
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fas fa-user-check"></i></div>
+                    <div><p class="text-[10px] font-bold text-slate-400">বাকি নেই</p><p class="font-bold text-slate-700"><span id="dash-no-baki">0</span> জন</p></div>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-slate-800 mt-2">কুইক মেনু</h3>
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="openTab('add-txn')" class="bg-blue-600 text-white p-4 rounded-3xl flex flex-col items-center gap-2 shadow-lg shadow-blue-100"><i class="fas fa-plus-circle text-xl"></i><span class="text-[10px] font-bold">লেনদেন</span></button>
+                <button onclick="openTab('customers')" class="bg-white text-slate-700 p-4 rounded-3xl flex flex-col items-center gap-2 border border-slate-100"><i class="fas fa-users text-xl text-blue-600"></i><span class="text-[10px] font-bold">খাতা</span></button>
+                <button onclick="openTab('add-cust')" class="bg-white text-slate-700 p-4 rounded-3xl flex flex-col items-center gap-2 border border-slate-100"><i class="fas fa-user-plus text-xl text-emerald-600"></i><span class="text-[10px] font-bold">নতুন</span></button>
+            </div>
+        </section>
+
+        <section id="page-customers" class="page space-y-4">
+            <div class="bg-white p-2 rounded-2xl flex items-center gap-2 shadow-sm">
+                <i class="fas fa-search text-slate-300 ml-3"></i>
+                <input type="text" onkeyup="searchCust(this.value)" placeholder="নাম বা মোবাইল..." class="w-full p-2 outline-none text-sm">
+                <select onchange="sortCustomers(this.value)" class="bg-slate-50 text-[10px] font-bold p-2 rounded-xl outline-none border-none">
+                    <option value="none">সব</option>
+                    <option value="has">বাকি আছে</option>
+                    <option value="no">বাকি নাই</option>
+                    <option value="high">বেশি থেকে কম</option>
+                    <option value="low">কম থেকে বেশি</option>
+                </select>
+            </div>
+            <div id="customer-list" class="space-y-3"></div>
+        </section>
+
+        <section id="page-ledger" class="page space-y-4">
+            <div id="ledger-header"></div>
+            
+            <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
+                <h4 class="text-xs font-bold text-slate-400 mb-4 uppercase tracking-tighter">মাসিক লেনদেন চ্যাট গ্রাফ</h4>
+                <canvas id="monthlyChart" height="180"></canvas>
+            </div>
+
+            <div id="ledger-list" class="space-y-3"></div>
+        </section>
+
+        <section id="page-add-txn" class="page">
+            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm space-y-4">
+                <h3 class="text-xl font-bold text-slate-800">লেনদেন ইনপুট</h3>
+                <select id="txn-cid" class="w-full p-4 bg-slate-50 rounded-2xl outline-none border-none focus:ring-2 focus:ring-blue-500"></select>
+                <div class="flex bg-slate-100 p-1 rounded-2xl">
+                    <button id="type-baki" onclick="setTxnType('BAKI')" class="flex-1 py-4 rounded-xl font-bold bg-white text-blue-600 shadow-sm transition-all">বাকি (+)</button>
+                    <button id="type-joma" onclick="setTxnType('JOMA')" class="flex-1 py-4 rounded-xl font-bold text-slate-500 transition-all">জমা (-)</button>
+                </div>
+                <input type="number" id="txn-amount" placeholder="৳ ০.০০" class="w-full p-6 text-4xl font-black bg-slate-50 rounded-3xl text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                <input type="text" id="txn-note" placeholder="বিস্তারিত (যেমন: চাল, ডাল)" class="w-full p-4 bg-slate-50 rounded-2xl outline-none border-none">
+                <button onclick="saveTxn()" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-bold shadow-xl shadow-blue-200 active:scale-95 transition-all">নিশ্চিত করুন</button>
+            </div>
+        </section>
+
+        <section id="page-add-cust" class="page">
+            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm space-y-4">
+                <h3 id="cust-form-title" class="text-xl font-bold text-slate-800">নতুন কাস্টমার</h3>
+                <input type="hidden" id="edit-cid">
+                <input type="text" id="cust-name" placeholder="নাম" class="w-full p-4 bg-slate-50 rounded-2xl outline-none border-none">
+                <input type="tel" id="cust-mobile" placeholder="মোবাইল নম্বর" class="w-full p-4 bg-slate-50 rounded-2xl outline-none border-none">
+                <input type="text" id="cust-address" placeholder="ঠিকানা" class="w-full p-4 bg-slate-50 rounded-2xl outline-none border-none">
+                <button onclick="saveCust()" class="w-full bg-emerald-600 text-white py-5 rounded-3xl font-bold shadow-xl active:scale-95 transition-all">সেভ করুন</button>
+            </div>
+        </section>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-100 flex justify-around p-3 z-[100] rounded-t-[2rem] shadow-2xl">
+        <button onclick="openTab('dashboard')" class="flex flex-col items-center text-blue-600"><i class="fas fa-home text-lg"></i><span class="text-[10px] font-bold mt-1">হোম</span></button>
+        <button onclick="openTab('customers')" class="flex flex-col items-center text-slate-400"><i class="fas fa-book-open text-lg"></i><span class="text-[10px] font-bold mt-1">খাতা</span></button>
+        <button onclick="openTab('add-txn')" class="w-14 h-14 bg-blue-600 text-white rounded-2xl -mt-10 shadow-xl border-4 border-white flex items-center justify-center active:scale-90 transition-all"><i class="fas fa-plus text-xl"></i></button>
+        <button onclick="openTab('add-cust')" class="flex flex-col items-center text-slate-400"><i class="fas fa-user-plus text-lg"></i><span class="text-[10px] font-bold mt-1">নতুন</span></button>
+        <button onclick="manualRefresh()" class="flex flex-col items-center text-slate-400"><i class="fas fa-sync text-lg"></i><span class="text-[10px] font-bold mt-1">রিফ্রেশ</span></button>
+    </nav>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyfJdwCiJrmuxym1Hl89_DlMm9zcNOwV3HDR9nsouvxC8Pzu_dV-0ovfshzHth2NE7aPw/exec"; 
+        
+        let state = { currentTab: 'dashboard', history: ['dashboard'], customers: [], txnType: 'BAKI', chart: null };
+
+        function showLoader(v) { document.getElementById('loader').style.display = v ? 'flex' : 'none'; }
+
+        async function apiPost(p) {
+            showLoader(true);
+            try {
+                const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(p) });
+                return await r.json();
+            } catch(e) { alert("নেটওয়ার্ক সমস্যা!"); } finally { showLoader(false); }
+        }
+
+        async function apiGet(params) {
+            showLoader(true);
+            const url = new URL(API_URL);
+            Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
+            try {
+                const r = await fetch(url);
+                return await r.json();
+            } catch(e) { alert("ডাটা লোড হয়নি!"); } finally { showLoader(false); }
+        }
+
+        function openTab(id, push = true) {
+            state.currentTab = id;
+            if(push) state.history.push(id);
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + id).classList.add('active');
+            document.getElementById('back-btn').classList.toggle('hidden', id === 'dashboard');
+            
+            if(id === 'dashboard') loadDashboard();
+            if(id === 'customers') loadCustomers();
+            if(id === 'add-txn') populateCustSelect();
+        }
+
+        function goBack() { if(state.history.length > 1) { state.history.pop(); openTab(state.history.pop(), true); } }
+
+        async function loadDashboard() {
+            const d = await apiGet({ action: 'getDashboard' });
+            if(!d) return;
+            document.getElementById('dash-total-baki').innerText = d.totalBaki.toLocaleString('en-IN');
+            document.getElementById('dash-today-baki').innerText = d.todayBaki.toLocaleString('en-IN');
+            document.getElementById('dash-today-joma').innerText = d.todayJoma.toLocaleString('en-IN');
+            document.getElementById('dash-has-baki').innerText = d.hasBaki;
+            document.getElementById('dash-no-baki').innerText = d.noBaki;
+        }
+
+        function manualRefresh() {
+            const icon = document.getElementById('refresh-icon');
+            icon.classList.add('fa-spin');
+            if(state.currentTab === 'dashboard') loadDashboard();
+            else if(state.currentTab === 'customers') loadCustomers();
+            else if(state.currentTab === 'ledger') { const cid = document.getElementById('current-cid').value; viewLedger(cid); }
+            setTimeout(() => icon.classList.remove('fa-spin'), 1000);
+        }
+
+        async function loadCustomers() {
+            const d = await apiGet({ action: 'getCustomers' });
+            state.customers = d.slice(1);
+            renderCustomers(state.customers);
+        }
+
+        function renderCustomers(list) {
+            document.getElementById('customer-list').innerHTML = list.map(c => `
+                <div onclick="viewLedger('${c[0]}')" class="bg-white p-4 rounded-3xl shadow-sm flex justify-between items-center border border-slate-100 active:scale-95 transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-bold text-lg">${c[1].charAt(0)}</div>
+                        <div>
+                            <h4 class="font-bold text-slate-800">${c[1]}</h4>
+                            <p class="text-[10px] text-slate-400">${c[2]}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[8px] font-bold text-slate-300 uppercase tracking-widest">ব্যালেন্স</p>
+                        <p class="font-black ${c[5]>0?'text-rose-500':'text-emerald-600'}">৳${c[5]}</p>
+                        <span class="text-[8px] font-bold px-2 rounded-full ${c[5]>0?'bg-rose-50 text-rose-500':'bg-emerald-50 text-emerald-500'}">${c[5]>0?'বাকি':'পরিশোধ'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function sortCustomers(mode) {
+            let sorted = [...state.customers];
+            if(mode === 'has') sorted = sorted.filter(c => c[5] > 0);
+            if(mode === 'no') sorted = sorted.filter(c => c[5] <= 0);
+            if(mode === 'high') sorted.sort((a,b) => b[5] - a[5]);
+            if(mode === 'low') sorted.sort((a,b) => a[5] - b[5]);
+            renderCustomers(sorted);
+        }
+
+        async function viewLedger(cid) {
+            const c = state.customers.find(i => i[0] === cid);
+            openTab('ledger');
+            document.getElementById('ledger-header').innerHTML = `
+                <input type="hidden" id="current-cid" value="${cid}">
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 mb-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800">${c[1]}</h2>
+                            <p class="text-sm text-slate-500">${c[2]}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editCust('${cid}')" class="w-10 h-10 bg-slate-50 text-blue-600 rounded-full flex items-center justify-center"><i class="fas fa-pen text-xs"></i></button>
+                            <button onclick="deleteCust('${cid}')" class="w-10 h-10 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center"><i class="fas fa-trash text-xs"></i></button>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-6 border-t flex justify-between items-center">
+                        <div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">ব্যালেন্স</p><p class="text-2xl font-black text-rose-500">৳${c[5]}</p></div>
+                        <a href="tel:${c[2]}" class="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100"><i class="fas fa-phone"></i></a>
+                    </div>
+                </div>
+            `;
+            const r = await apiGet({ action: 'getLedger', cid });
+            renderChart(r.chart);
+            document.getElementById('ledger-list').innerHTML = r.transactions.slice(1).reverse().map(t => `
+                <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border-l-4 ${t[3]=='BAKI'?'border-rose-500':'border-emerald-500'}">
+                    <div><p class="text-sm font-bold text-slate-700">${t[7] || 'পণ্য ক্রয়'}</p><p class="text-[10px] text-slate-400">${new Date(t[8]).toLocaleDateString('bn-BD')}</p></div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right"><p class="font-black ${t[3]=='BAKI'?'text-rose-500':'text-emerald-500'}">৳${t[4]}</p></div>
+                        <button onclick="deleteTxn('${t[0]}')" class="text-slate-200 hover:text-rose-400"><i class="fas fa-times-circle"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            if(state.chart) state.chart.destroy();
+            state.chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [
+                        { label: 'বাকি', data: data.map(d => d.baki), backgroundColor: '#f43f5e', borderRadius: 5 },
+                        { label: 'জমা', data: data.map(d => d.joma), backgroundColor: '#10b981', borderRadius: 5 }
+                    ]
+                },
+                options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, display: false }, x: { grid: { display: false } } } }
+            });
+        }
+
+        // --- Logic & Forms ---
+
+        function setTxnType(t) {
+            state.txnType = t;
+            document.getElementById('type-baki').className = t === 'BAKI' ? "flex-1 py-4 rounded-xl font-bold bg-white text-blue-600 shadow-sm transition-all" : "flex-1 py-4 rounded-xl font-bold text-slate-500 transition-all";
+            document.getElementById('type-joma').className = t === 'JOMA' ? "flex-1 py-4 rounded-xl font-bold bg-white text-emerald-600 shadow-sm transition-all" : "flex-1 py-4 rounded-xl font-bold text-slate-500 transition-all";
+        }
+
+        async function saveTxn() {
+            const p = { customerId: document.getElementById('txn-cid').value, type: state.txnType, amount: document.getElementById('txn-amount').value, note: document.getElementById('txn-note').value };
+            if(!p.customerId || !p.amount) return alert("সঠিক তথ্য দিন!");
+            const res = await apiPost({ action: 'addTransaction', payload: p });
+            if(res.status === 'success') { alert("লেনদেন সফল!"); openTab('dashboard'); }
+        }
+
+        async function saveCust() {
+            const cid = document.getElementById('edit-cid').value;
+            const p = { name: document.getElementById('cust-name').value, mobile: document.getElementById('cust-mobile').value, address: document.getElementById('cust-address').value };
+            if(!p.name || !p.mobile) return alert("নাম ও মোবাইল দিন!");
+            const res = await apiPost({ action: cid ? 'updateCustomer' : 'addCustomer', payload: { ...p, cid } });
+            if(res.status === 'success') { alert("কাস্টমার সেভ হয়েছে!"); openTab('customers'); }
+        }
+
+        async function deleteCust(cid) {
+            if(!confirm("এই কাস্টমার ডিলিট করলে তার সব লেনদেন মুছে যাবে! নিশ্চিত?")) return;
+            const res = await apiPost({ action: 'deleteCustomer', cid });
+            if(res.status === 'success') openTab('customers');
+        }
+
+        function populateCustSelect() {
+            document.getElementById('txn-cid').innerHTML = state.customers.map(c => `<option value="${c[0]}">${c[1]} (৳${c[5]})</option>`).join('');
+        }
+
+        function searchCust(v) {
+            const f = state.customers.filter(c => c[1].toLowerCase().includes(v.toLowerCase()) || c[2].includes(v));
+            renderCustomers(f);
+        }
+
+        window.onload = () => { loadDashboard(); };
+    </script>
+</body>
+</html>
